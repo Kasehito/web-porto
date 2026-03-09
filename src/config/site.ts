@@ -2,13 +2,12 @@ import { PortfolioItem, SocialLink, WelcomeText, ExperienceItem } from '@/types'
 
 // Site Configuration
 export const siteConfig = {
-  name: 'KasehitoWorks',
-  motto: 'Creating Visual Stories Through Motion & Light',
+  name: 'Kasehitoworks',
+  motto: 'Building Functions. Creating Motion.',
   location: 'Indonesia',
   about: {
     paragraphs: [
-      "I'm a passionate motion graphics artist and videographer based in Indonesia, dedicated to bringing creative visions to life through dynamic visual storytelling.",
-      "With a keen eye for detail and a love for innovative design, I specialize in crafting compelling visual experiences that captivate and inspire audiences.",
+    "I'm a passionate motion/graphics artist, and software developer based in Indonesia. My work lives at the intersection of technology and art, dedicated to bringing creative visions to life through dynamic visual storytelling and robust code.",
     ],
   },
 };
@@ -16,11 +15,11 @@ export const siteConfig = {
 // Skills
 export const skills = [
   'Motion Graphics',
-  'Video Editing',
-  'Adobe After Effects',
-  'Adobe Premiere Pro',
   'Graphic Design',
+  'Video Editing',
   'Web Design',
+  'UI/UX Design',
+  'Mobile App Design',
 ];
 
 // Welcome texts in multiple languages
