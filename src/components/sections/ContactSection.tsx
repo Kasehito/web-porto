@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { socialLinks } from '@/config/site';
+import SocialIcon from '@/components/ui/SocialIcon';
 
 export default function ContactSection() {
   return (
@@ -38,7 +39,7 @@ export default function ContactSection() {
             viewport={{ once: true }}
             className="lg:w-2/5 flex flex-col"
           >
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid gap-2 sm:gap-3">
               {socialLinks.map((link, index) => (
                 <motion.a
                   key={link.name}
@@ -51,15 +52,14 @@ export default function ContactSection() {
                   viewport={{ once: true }}
                   whileHover={{ scale: 1.03, y: -2 }}
                   className="group backdrop-blur-md bg-white/5 border border-white/10 rounded-lg hover:border-white/30 transition-all duration-300 shadow-lg hover:shadow-white/10"
-                >
-                  <div className="p-2 sm:p-3 flex items-center gap-1.5 sm:gap-2">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg backdrop-blur-sm bg-white/10 border border-white/20 flex items-center justify-center text-sm sm:text-base group-hover:scale-110 transition-transform shrink-0">
-                      {link.icon}
+                >                  <div className="p-2 sm:p-3 flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg backdrop-blur-sm bg-white/10 border border-white/20 flex items-center justify-center p-1.5 group-hover:scale-110 transition-transform shrink-0">
+                      <SocialIcon type={link.icon} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-[10px] sm:text-xs font-semibold mb-0.5 group-hover:text-white transition-colors truncate">
+                      <p className="text-[10px] sm:text-xs font-semibold mb-0.5 group-hover:text-white transition-colors truncate">
                         {link.name}
-                      </h3>
+                      </p>
                       <p className="text-[8px] sm:text-[9px] text-gray-400 font-light truncate">
                         {link.description}
                       </p>
@@ -138,7 +138,8 @@ export default function ContactSection() {
               </form>
             </div>
           </motion.div>
-        </div></div>
+        </div>
+        </div>
     </section>
   );
 }

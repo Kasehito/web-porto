@@ -5,18 +5,41 @@ import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
 import HomeSection from '@/components/sections/HomeSection';
 import SkillsSection from '@/components/sections/SkillsSection';
-import EducationSection from '@/components/sections/EducationSection';
+import ExperienceSection from '@/components/sections/ExperienceSection';
 import PortfolioSection from '@/components/sections/PortfolioSection';
 import ContactSection from '@/components/sections/ContactSection';
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const portfolioScrollRef = useRef<HTMLDivElement>(null);
+  const experienceScrollRef = useRef<HTMLDivElement>(null);
   const [currentSection, setCurrentSection] = useState(0);
-  const totalSections = 5;
+  const totalSections = 5; // Updated: Home, Skills, Experience, Portfolio, Contact
   const isScrollingRef = useRef(false);
+  const isRestoringRef = useRef(false);
   const [isPortfolioScrollable, setIsPortfolioScrollable] = useState(false);
   const [isPortfolioAtBottom, setIsPortfolioAtBottom] = useState(false);
+  const [isExperienceScrollable, setIsExperienceScrollable] = useState(false);
+  const [isExperienceAtBottom, setIsExperienceAtBottom] = useState(false);
+
+  // Restore section from sessionStorage on mount (e.g. back from portfolio detail)
+  useEffect(() => {
+    const saved = sessionStorage.getItem('currentSection');
+    if (saved !== null) {
+      sessionStorage.removeItem('currentSection');
+      const index = parseInt(saved, 10);
+      isRestoringRef.current = true;
+      setCurrentSection(index);
+      // Instant jump — skip smooth animation so it doesn't flash Home first
+      const container = containerRef.current;
+      if (container) {
+        container.scrollLeft = index * window.innerWidth;
+      }
+      // Reset flag after a tick
+      setTimeout(() => { isRestoringRef.current = false; }, 50);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check if portfolio section has scrollable content
   useEffect(() => {
@@ -32,10 +55,36 @@ export default function Home() {
       }
     };
 
+    const checkExperienceScroll = () => {
+      const experienceScroll = experienceScrollRef.current;
+      if (experienceScroll) {
+        const hasScroll = experienceScroll.scrollHeight > experienceScroll.clientHeight;
+        setIsExperienceScrollable(hasScroll);
+        
+        // Check if already at bottom
+        const isAtBottom = Math.abs(experienceScroll.scrollHeight - experienceScroll.clientHeight - experienceScroll.scrollTop) < 5;
+        setIsExperienceAtBottom(isAtBottom);
+      }
+    };
+
+    // Check on mount and when section changes
     checkPortfolioScroll();
-    window.addEventListener('resize', checkPortfolioScroll);
+    checkExperienceScroll();
     
-    return () => window.removeEventListener('resize', checkPortfolioScroll);
+    // Add small delay to ensure content is rendered
+    const timer = setTimeout(() => {
+      checkPortfolioScroll();
+      checkExperienceScroll();
+    }, 100);
+    
+    window.addEventListener('resize', checkPortfolioScroll);
+    window.addEventListener('resize', checkExperienceScroll);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkPortfolioScroll);
+      window.removeEventListener('resize', checkExperienceScroll);
+    };
   }, [currentSection]);
 
   // Monitor portfolio scroll position
@@ -52,6 +101,20 @@ export default function Home() {
     return () => portfolioScroll.removeEventListener('scroll', handlePortfolioScroll);
   }, []);
 
+  // Monitor experience scroll position
+  useEffect(() => {
+    const experienceScroll = experienceScrollRef.current;
+    if (!experienceScroll) return;
+
+    const handleExperienceScroll = () => {
+      const isAtBottom = Math.abs(experienceScroll.scrollHeight - experienceScroll.clientHeight - experienceScroll.scrollTop) < 5;
+      setIsExperienceAtBottom(isAtBottom);
+    };
+
+    experienceScroll.addEventListener('scroll', handleExperienceScroll);
+    return () => experienceScroll.removeEventListener('scroll', handleExperienceScroll);
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -62,24 +125,62 @@ export default function Home() {
       
       if (isScrollingRef.current) return;
 
-      // If we're in portfolio section (index 3)
+      // If we're in Experience section (index 2)
+      if (currentSection === 2) {
+        const experienceScroll = experienceScrollRef.current;
+        if (experienceScroll) {
+          // Check if experience has scrollable content
+          const hasScroll = experienceScroll.scrollHeight > experienceScroll.clientHeight;
+          
+          if (hasScroll) {
+            const delta = e.deltaY;
+            const scrollMultiplier = 2; // Increase scroll speed (2x faster)
+            const scrollTop = experienceScroll.scrollTop;
+            const scrollHeight = experienceScroll.scrollHeight;
+            const clientHeight = experienceScroll.clientHeight;
+            const isAtTop = scrollTop <= 1; // Allow 1px tolerance
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1; // Allow 1px tolerance
+
+            // If scrolling down and not at bottom, scroll the experience content
+            if (delta > 0 && !isAtBottom) {
+              experienceScroll.scrollTop += delta * scrollMultiplier;
+              return;
+            }
+            // If scrolling up and not at top, scroll the experience content
+            else if (delta < 0 && !isAtTop) {
+              experienceScroll.scrollTop += delta * scrollMultiplier;
+              return;
+            }
+          }
+        }
+      }
+
+      // If we're in Portfolio section (index 3)
       if (currentSection === 3) {
         const portfolioScroll = portfolioScrollRef.current;
-        if (portfolioScroll && isPortfolioScrollable) {
-          const delta = e.deltaY;
-          const scrollMultiplier = 2; // Increase scroll speed (2x faster)
-          const isAtTop = portfolioScroll.scrollTop === 0;
-          const isAtBottom = Math.abs(portfolioScroll.scrollHeight - portfolioScroll.clientHeight - portfolioScroll.scrollTop) < 5;
+        if (portfolioScroll) {
+          // Check if portfolio has scrollable content
+          const hasScroll = portfolioScroll.scrollHeight > portfolioScroll.clientHeight;
+          
+          if (hasScroll) {
+            const delta = e.deltaY;
+            const scrollMultiplier = 2; // Increase scroll speed (2x faster)
+            const scrollTop = portfolioScroll.scrollTop;
+            const scrollHeight = portfolioScroll.scrollHeight;
+            const clientHeight = portfolioScroll.clientHeight;
+            const isAtTop = scrollTop <= 1; // Allow 1px tolerance
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1; // Allow 1px tolerance
 
-          // If scrolling down and not at bottom, scroll the portfolio content
-          if (delta > 0 && !isAtBottom) {
-            portfolioScroll.scrollTop += delta * scrollMultiplier;
-            return;
-          }
-          // If scrolling up and not at top, scroll the portfolio content
-          else if (delta < 0 && !isAtTop) {
-            portfolioScroll.scrollTop += delta * scrollMultiplier;
-            return;
+            // If scrolling down and not at bottom, scroll the portfolio content
+            if (delta > 0 && !isAtBottom) {
+              portfolioScroll.scrollTop += delta * scrollMultiplier;
+              return;
+            }
+            // If scrolling up and not at top, scroll the portfolio content
+            else if (delta < 0 && !isAtTop) {
+              portfolioScroll.scrollTop += delta * scrollMultiplier;
+              return;
+            }
           }
         }
       }
@@ -135,7 +236,8 @@ export default function Home() {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    
+    // Skip smooth scroll when restoring from sessionStorage (already jumped instantly)
+    if (isRestoringRef.current) return;
     const sectionWidth = window.innerWidth;
     container.scrollTo({
       left: currentSection * sectionWidth,
@@ -176,7 +278,7 @@ export default function Home() {
         `}</style>
         <HomeSection />
         <SkillsSection />
-        <EducationSection />
+        <ExperienceSection ref={experienceScrollRef} />
         <PortfolioSection ref={portfolioScrollRef} />
         <ContactSection />
       </main>

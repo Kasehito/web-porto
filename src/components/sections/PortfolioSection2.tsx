@@ -9,10 +9,9 @@ import { portfolioItems, portfolioCategories } from '@/config/site';
 export default function PortfolioSection() {
   const [filter, setFilter] = useState('All');
   const categories = portfolioCategories;
-
   const filteredItems = filter === 'All' 
     ? portfolioItems 
-    : portfolioItems.filter(item => item.category === filter);
+    : portfolioItems.filter(item => item.categories.includes(filter as never));
 
   return (
     <SectionWrapper id="portfolio" className="bg-zinc-950">
@@ -80,7 +79,7 @@ export default function PortfolioSection() {
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-zinc-800 overflow-hidden mb-4">
-                  <PlaceholderThumbnail number={item.id} category={item.category} />
+                  <PlaceholderThumbnail number={item.id} category={item.categories[0]} />
                   
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -99,9 +98,8 @@ export default function PortfolioSection() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-semibold group-hover:text-gray-300 transition-colors">
                       {item.title}
-                    </h3>
-                    <span className="text-xs text-gray-500 uppercase tracking-wider">
-                      {item.category}
+                    </h3>                    <span className="text-xs text-gray-500 uppercase tracking-wider">
+                      {item.categories.join(' · ')}
                     </span>
                   </div>
                   <p className="text-sm text-gray-400 font-light">
