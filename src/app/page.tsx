@@ -17,6 +17,7 @@ export default function Home() {
   const totalSections = 5; // Updated: Home, Skills, Experience, Portfolio, Contact
   const isScrollingRef = useRef(false);
   const isRestoringRef = useRef(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [isPortfolioScrollable, setIsPortfolioScrollable] = useState(false);
   const [isPortfolioAtBottom, setIsPortfolioAtBottom] = useState(false);
   const [isExperienceScrollable, setIsExperienceScrollable] = useState(false);
@@ -225,10 +226,104 @@ export default function Home() {
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
-    
+
+    // ── Touch / swipe support for mobile ──────────────────────────────────
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+
+      const dx = e.touches[0].clientX - touchStartRef.current.x;
+      const dy = e.touches[0].clientY - touchStartRef.current.y;
+
+      // Only handle predominantly vertical swipes
+      if (Math.abs(dy) <= Math.abs(dx)) return;
+
+      // Inner scroll for Experience section (index 2)
+      if (currentSection === 2) {
+        const experienceScroll = experienceScrollRef.current;
+        if (experienceScroll && experienceScroll.scrollHeight > experienceScroll.clientHeight) {
+          const atTop = experienceScroll.scrollTop <= 1;
+          const atBottom = experienceScroll.scrollTop + experienceScroll.clientHeight >= experienceScroll.scrollHeight - 1;
+          if ((dy < 0 && !atBottom) || (dy > 0 && !atTop)) {
+            e.preventDefault();
+            experienceScroll.scrollTop -= dy;
+            touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return;
+          }
+        }
+      }
+
+      // Inner scroll for Portfolio section (index 3)
+      if (currentSection === 3) {
+        const portfolioScroll = portfolioScrollRef.current;
+        if (portfolioScroll && portfolioScroll.scrollHeight > portfolioScroll.clientHeight) {
+          const atTop = portfolioScroll.scrollTop <= 1;
+          const atBottom = portfolioScroll.scrollTop + portfolioScroll.clientHeight >= portfolioScroll.scrollHeight - 1;
+          if ((dy < 0 && !atBottom) || (dy > 0 && !atTop)) {
+            e.preventDefault();
+            portfolioScroll.scrollTop -= dy;
+            touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return;
+          }
+        }
+      }
+
+      // Prevent default to avoid browser scroll interfering
+      if (Math.abs(dy) > 10) e.preventDefault();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current || isScrollingRef.current) {
+        touchStartRef.current = null;
+        return;
+      }
+
+      const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+      const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+      touchStartRef.current = null;
+
+      const SWIPE_THRESHOLD = 50;
+
+      // Horizontal swipe → change section
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
+        isScrollingRef.current = true;
+        if (dx < 0 && currentSection < totalSections - 1) {
+          setCurrentSection(prev => prev + 1);
+        } else if (dx > 0 && currentSection > 0) {
+          setCurrentSection(prev => prev - 1);
+        }
+        setTimeout(() => { isScrollingRef.current = false; }, 800);
+        return;
+      }
+
+      // Vertical swipe → change section (when inner scroll is exhausted)
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > SWIPE_THRESHOLD) {
+        isScrollingRef.current = true;
+        if (dy < 0 && currentSection < totalSections - 1) {
+          setCurrentSection(prev => prev + 1);
+        } else if (dy > 0 && currentSection > 0) {
+          setCurrentSection(prev => prev - 1);
+        }
+        setTimeout(() => { isScrollingRef.current = false; }, 800);
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
     return () => {
       container.removeEventListener('wheel', handleWheel);
       window.removeEventListener('keydown', handleKeyDown);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [currentSection]);
 
@@ -247,7 +342,7 @@ export default function Home() {
 
   return (
     <div className="bg-black text-white overflow-hidden">
-      <Navbar />
+      <Navbar onNavigate={setCurrentSection} currentSection={currentSection} />
       <Footer />
       
       {/* Section Indicators */}
